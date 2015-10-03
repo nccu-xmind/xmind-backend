@@ -35,7 +35,10 @@ try {
     }
 
     $upload_time = date("Y-m-d H:i:s", intval($upload_data->Timestamp / 1000));
-    $uh_id = $objUserInfo->getUserHardwareID($user_id, $upload_data->HardwareID, $upload_data->Model, $upload_data->AndroidVersion, $upload_time);
+    $uh_id = $objUserInfo->getUserHardwareID(
+            $user_id, $upload_data->HardwareID, $upload_data->Model,
+            $upload_data->AndroidVersion, $upload_data->ApplicationVersion,
+            $upload_time);
 
     //php-resque
     Resque::setBackend('127.0.0.1:6379');
@@ -116,23 +119,23 @@ try {
                     "pgn" => $probe->PackageName
                 );
                 break;
-            case 'Current_Foreground_Camera_AppName':
-                $probe_job['FGCamAppNameProbe'][] = array(
-                    "user_id" => $user_id,
-                    "uh_id" => $uh_id,
-                    "trig_time" => $probe->TriggeredTimestamp,
-                    "pgn" => $probe->PackageName
-                );
-                break;
-            case 'Current_Foreground_Screen_Unlock_AppName':
-                $probe_job['FGScUAppNameProbe'][] = array(
-                    "user_id" => $user_id,
-                    "uh_id" => $uh_id,
-                    "trig_time" => $probe->TriggeredTimestamp,
-                    "pgn" => $probe->PackageName
-                );
-                break;
-            
+//            case 'Current_Foreground_Camera_AppName':
+//                $probe_job['FGCamAppNameProbe'][] = array(
+//                    "user_id" => $user_id,
+//                    "uh_id" => $uh_id,
+//                    "trig_time" => $probe->TriggeredTimestamp,
+//                    "pgn" => $probe->PackageName
+//                );
+//                break;
+//            case 'Current_Foreground_Screen_Unlock_AppName':
+//                $probe_job['FGScUAppNameProbe'][] = array(
+//                    "user_id" => $user_id,
+//                    "uh_id" => $uh_id,
+//                    "trig_time" => $probe->TriggeredTimestamp,
+//                    "pgn" => $probe->PackageName
+//                );
+//                break;
+
             default:
                 break;
         }
@@ -148,19 +151,20 @@ try {
             $msg.= $probe_type . '-> error.';
         }
     }
-    $result_savelog = $objUpl->saveUploadLog($user_id, $uh_id, $upload_time, $receive_count, json_encode($receive_probe));
-    
+    $result_savelog = $objUpl->saveUploadLog($user_id, $uh_id, $upload_time,
+            $receive_count, json_encode($receive_probe)
+    );
+
+    $result_upload = $result_resque AND $result_savelog;
 } catch (Exception $exc) {
-    $upl_rs = false;
+    $result_upload = false;
     $receive_count = 0;
     $msg .= $exc->getMessage();
 } catch (PDOException $pexc) {
-    $upl_rs = false;
+    $result_upload = false;
     $receive_count = 0;
     $msg .= $exc->getMessage();
 }
-
-$result_upload = $result_resque AND $result_savelog;
 
 //歸還連線資源
 unset($pdoConn);
@@ -170,6 +174,11 @@ $result = array(
     "count" => $receive_count,
     "msg" => $msg
 );
+
+$up_rslog = '[' . date("Y-m-d H:i:s") . '] UserID-' . $user_id . ' (HID-' . $uh_id . ') result: ';
+$up_rslog .= print_r($result, true) . PHP_EOL;
+file_put_contents(_APP_PATH . "upload-result-log/" . date("Y-m-d") . "-uplog.txt",
+        $up_rslog, FILE_APPEND | LOCK_EX);
 
 header("Content-type: application/json; charset=utf-8");
 

@@ -8,8 +8,8 @@ class FGAppNameProbe
         require_once _APP_PATH . 'classes/myPDOConn.Class.php';
         $pdoConn = \ninthday\niceToolbar\myPDOConn::getInstance('BackendConnConfig.inc.php');
 
-        $sql = 'INSERT INTO `probe_fgapp_log`(`userID`, `UHID`, `Type`, `TriggeredTimes`, `PackageName`, `Activity`) '
-                . 'VALUES (:userID, :UHID, 0, :TriggeredTimes, :PackageName, :Activity)';
+        $sql = 'INSERT INTO `probe_fgapp_log`(`userID`, `UHID`, `TriggeredTimes`, `PackageName`, `Activity`) '
+                . 'VALUES (:userID, :UHID, :TriggeredTimes, :PackageName, :Activity)';
         try {
             $stmt = $pdoConn->dbh->prepare($sql);
             if ($stmt) {
