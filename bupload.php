@@ -33,6 +33,11 @@ try {
     if ($user_id == 0) {
         throw new Exception('User Account is Not in Database!');
     }
+    
+    //檢查 Active 狀態，不是啓動的 User 資料不截取
+    if (!$objUserInfo->chkActiveByUserID($user_id)){
+        throw new Exception('User Account is Not Active!');
+    }
 
     $upload_time = date("Y-m-d H:i:s", intval($upload_data->Timestamp / 1000));
     $uh_id = $objUserInfo->getUserHardwareID(

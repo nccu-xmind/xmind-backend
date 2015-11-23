@@ -6,7 +6,7 @@
  * Xmind 中和 User 資訊相關
  *
  * @author ninthday <bee.me@ninthday.info>
- * @version 1.0
+ * @version 1.2
  * @copyright (c) 2015, Jeffy Shih
  */
 
@@ -49,6 +49,27 @@ class UserInfo
             throw new Exception($exptMsg);
         }
         return $rtn;
+    }
+
+    /**
+     * 檢查使用者帳號是否為啓動狀態
+     * 
+     * @access public
+     * @param int $userID 使用者編號
+     * @return boolean 是否為啓動狀態
+     * @since version 1.2 (2015-11-23)
+     */
+    public function chkActiveByUserID($userID)
+    {
+        $sql = "SELECT * FROM `info_user` WHERE `userID` = :userID";
+        $stmt = $this->dbh->prepare($sql);
+        $stmt->bindParam(':userID', $userID, \PDO::PARAM_INT);
+        if ($stmt->execute() && $stmt->rowCount() > 0) {
+            $rs = $stmt->fetch(\PDO::FETCH_ASSOC);
+            return $rs['inactive'] != 0;
+        }else{
+            return false;
+        }
     }
 
     /**
