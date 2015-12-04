@@ -5,7 +5,7 @@
  * @version 1.0
  * @copyright (c) 2015, Jeffy Shih
  * @since 2015-06-28
- * @version 1.1
+ * @version 1.2
  */
 
 namespace ninthday\charlotte;
@@ -184,6 +184,7 @@ class GooglePlay
 
     /**
      * 檢查是不是傳回 Not Found 頁面
+     * (2015-12-04) 加入檢查 Unavailable in your country
      * 
      * @return boolen
      * @since version 1.0
@@ -192,7 +193,7 @@ class GooglePlay
     private function checkNotFound()
     {
         $title = $this->sdom->find('title', 0);
-        return ($title->innertext == "Not Found");
+        return ($title->innertext == "Not Found" || $title->innertext == "Unavailable in your country");
     }
 
     /**
