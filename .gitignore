@@ -1,3 +1,4 @@
 /nbproject/
 /inc/*.inc.php
 /vendor
+/shellscript/*.sh

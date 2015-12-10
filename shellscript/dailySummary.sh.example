@@ -1,0 +1,37 @@
+#!/bin/bash
+# =====================================================================
+# Author:	Jeffy <bee.me@ninthday.info>
+# Version:	v.1.0
+# Description:
+# This Shell Script is execute weekly to Full backup mobilesnsv5 to NAS.
+#
+# =====================================================================
+# History:
+# 
+# 2015-12-10	Jeffy	First version done.
+# =====================================================================
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+export PATH
+
+LANG=zh_TW.UTF-8; export LANG
+
+summaryday=`date --date='1 day ago' +%Y-%m-%d`
+email=""
+summarylog=/var/www/html/xxx/dailySummary-log/$summaryday.log
+dbuser=
+dbpasswd=
+
+
+
+# 彙整前一日實驗參加者上傳資料情形
+mysql -u $dbuser --password=$dbpasswd --table -e 'SELECT `A`.*, `B`.`oneDay`, `B`.`DaySum` \
+FROM (SELECT `userID`, `name`, `email` FROM `info_user` WHERE `inactive` = 1) AS `A`\
+LEFT JOIN \
+(SELECT `userID`, DATE(`uploadTime`) AS `oneDay`, SUM(`receiveCount`) AS `DaySum` FROM `upload_log`\
+GROUP BY `userID`,`oneDay`\
+HAVING `oneDay` = "'$summaryday'") AS `B`\
+ON `A`.`userID` = `B`.`userID`;' mobilesnsv5 > $summarylog
+
+sync; sync;
+
+mail -s "$summaryday XMind User Upload Summary Report" $email < $summarylog

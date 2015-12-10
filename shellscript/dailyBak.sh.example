@@ -1,0 +1,61 @@
+#!/bin/bash
+# =====================================================================
+# Author:	Jeffy <bee.me@ninthday.info>
+# Version:	v.1.0
+# Description:
+# This Shell Script is execute daily to back all probe log to NAS.
+#
+# =====================================================================
+# History:
+# 
+# 2015-12-09	Jeffy	First version done.
+# =====================================================================
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+export PATH
+
+LANG=zh_TW.UTF-8; export LANG
+
+day=`date +%Y-%m-%d`
+day1=`date --date='7 days ago' +%Y-%m-%d`
+basedir=/backup
+dailybak=$basedir/daily
+dbuser=
+dbpasswd=
+
+
+# 刪除先前所有的 .sql 檔
+rm -f $dailybak/*.sql
+
+# 所有 probe 資料表一個一個備份出來
+mysqldump -u $dbuser --password=$dbpasswd mobilesnsv5 probe_battery_log > $dailybak/probe_battery_log.sql
+mysqldump -u $dbuser --password=$dbpasswd mobilesnsv5 probe_bluetooth_log > $dailybak/probe_bluetooth_log.sql
+mysqldump -u $dbuser --password=$dbpasswd mobilesnsv5 probe_call_log > $dailybak/probe_call_log.sql
+mysqldump -u $dbuser --password=$dbpasswd mobilesnsv5 probe_fgapp_log > $dailybak/probe_fgapp_log.sql
+mysqldump -u $dbuser --password=$dbpasswd mobilesnsv5 probe_location_log > $dailybak/probe_location_log.sql
+mysqldump -u $dbuser --password=$dbpasswd mobilesnsv5 probe_photo_log > $dailybak/probe_photo_log.sql
+mysqldump -u $dbuser --password=$dbpasswd mobilesnsv5 probe_screen_log > $dailybak/probe_screen_log.sql
+mysqldump -u $dbuser --password=$dbpasswd mobilesnsv5 probe_service_log > $dailybak/probe_service_log.sql
+mysqldump -u $dbuser --password=$dbpasswd mobilesnsv5 probe_wifi_log > $dailybak/probe_wifi_log.sql
+
+# 切換至 backup 目錄
+cd $basedir/
+
+# 將所有 dump 出來的 .sql 打包成 tar.gz 檔案
+tar -zpcf $day.daily_backup.tar.gz $dailybak
+
+# 掛載 NAS 上的備份資料夾
+mount -t nfs 0.0.0.0:/volume1/mobileServBak /mnt/NASBak/
+
+# 複製今日的打包壓縮檔
+cp $basedir/$day.daily_backup.tar.gz /mnt/NASBak/.
+
+# 移除七天前的打包壓縮檔
+rm -f $basedir/$day1.daily_backup.tar.gz
+
+sync; sync;
+
+# 卸除掛載
+umount /mnt/NASBak
+
+sync; sync;
+
